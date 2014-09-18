@@ -9,7 +9,7 @@ Gem::Specification.new do |s|
   s.version     = Gmaps4rails::VERSION
   s.authors     = [%q{Benjamin Roth}, %q{David Ruyer}]
   s.email       = [%q{apnea.diving.deep@gmail.com}, %q{david.ruyer@gmail.com}]
-  s.homepage    = %q{http://github.com/apneadiving/Google-Maps-for-Rails}
+  s.homepage    = ""
   s.summary     = %q{Maps made easy for Ruby apps}
   s.description = %q{Enables easy Google map + overlays creation.}
   s.files       = `git ls-files`.split("\n")

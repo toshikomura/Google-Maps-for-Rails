@@ -16,6 +16,10 @@
     polyline:     google.maps.Polyline
     polygon:      google.maps.Polygon
     kml:          google.maps.KmlLayer
+    directionSer: google.maps.DirectionsService
+    directionRen: google.maps.DirectionsRenderer
+    directionTM:  google.maps.TravelMode
+    directionSta: google.maps.DirectionsStatus
 
     addListener: (object, event_name, fn)->
       factory.listener object, event_name, fn
@@ -25,6 +29,12 @@
 
     mapTypes: (type)->
       factory.mapTypez[type]
+
+    directionTMs: (type)->
+      factory.directionTM[type]
+
+    directionStas: (status)->
+      factory.directionSta[status]
 
     # position can be:
     # - [ lat, lng]

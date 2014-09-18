@@ -22,7 +22,7 @@ class @Gmaps.Objects.Handler
   # return array of marker objects
   addMarkers: (markers_data, provider_options)->
     _.map markers_data, (marker_data)=>
-      @addMarker marker_data, provider_options
+     @addMarker marker_data, provider_options
 
   # return marker object
   addMarker: (marker_data, provider_options)->
@@ -67,6 +67,27 @@ class @Gmaps.Objects.Handler
   addKml: (kml_data, provider_options)->
     @_addResource('kml', kml_data, provider_options)
 
+  # return Direction object
+  addDirection: (direction_data, provider_options)->
+    if direction_data.origin? and direction_data.destination?
+        @direction_service = @_builder('DirectionService').build(direction_data)
+        @direction_render = @_builder('DirectionRender').build(provider_options)
+        @calculate_route( direction_data)
+        @direction_render.getServiceObject().setMap(@getMap())
+        @direction_render.getServiceObject()
+    else
+        alert "Need direction origin and destination\n and you inform\n origin: " + direction.origin + "destination: " + "direction.destination"
+
+  # calculate routes of direction
+  calculate_route: ( direction_data)->
+    statusOk = @direction_service.primitives().directionStas('OK')
+    direction_render_serviceObject = @direction_render.getServiceObject()
+    @direction_service.getServiceObject().route direction_data, (response, status) ->
+      if status is statusOk
+        direction_render_serviceObject.setDirections response
+      else
+        alert "Couldn´t find direction"
+
   # removes markers from map
   removeMarkers: (gem_markers)->
     _.map gem_markers, (gem_marker)=>
@@ -107,7 +128,7 @@ class @Gmaps.Objects.Handler
 
   _cacheAllBuilders: ->
     that = @
-    _.each ['Bound', 'Circle',  'Clusterer', 'Kml', 'Map', 'Marker', 'Polygon', 'Polyline'], (kind)-> that._builder(kind)
+    _.each ['Bound', 'Circle',  'Clusterer', 'Kml', 'Map', 'Marker', 'Polygon', 'Polyline', 'DirectionService', 'DirectionRender'], (kind)-> that._builder(kind)
 
   _clusterize: ->
     _.isObject @marker_options.clusterer
