@@ -13,6 +13,7 @@ class @Gmaps.Objects.Handler
     @setOptions options
     @_cacheAllBuilders()
     @resetBounds()
+    @all_directions_renders = []
 
   buildMap: (options, onMapLoad = ->)->
     @map = @_builder('Map').build options, =>
@@ -68,25 +69,80 @@ class @Gmaps.Objects.Handler
     @_addResource('kml', kml_data, provider_options)
 
   # return Direction object
-  addDirection: (direction_data, provider_options)->
-    if direction_data.origin? and direction_data.destination?
-        @direction_service = @_builder('DirectionService').build(direction_data)
-        @direction_render = @_builder('DirectionRender').build(provider_options)
-        @calculate_route( direction_data)
-        @direction_render.getServiceObject().setMap(@getMap())
-        @direction_render.getServiceObject()
+  addDirection: (direction_data = null, provider_options = null)->
+    if direction_data?
+        if direction_data.origin? and direction_data.destination? and not _.isEmpty(direction_data.origin) and not _.isEmpty(direction_data.destination)
+
+            @direction_service = @_builder('DirectionService').build(direction_data)
+            @direction_render = @_builder('DirectionRender').build(provider_options)
+            @calculate_route( direction_data, provider_options)
+            @direction_render.getServiceObject().setMap(@getMap())
+            @all_directions_renders.push(@direction_render)
+            @direction_render.getServiceObject()
+        else
+            alert "Need direction origin and destination\n and you inform\n origin: " + direction.origin + "destination: " + "direction.destination"
     else
-        alert "Need direction origin and destination\n and you inform\n origin: " + direction.origin + "destination: " + "direction.destination"
+        alert "Need direction origin and destination"
 
   # calculate routes of direction
-  calculate_route: ( direction_data)->
+  calculate_route: ( direction_data = null, provider_options = null)->
     statusOk = @direction_service.primitives().directionStas('OK')
+    travelModeDefault = @direction_service.primitives().directionTMs('DRIVING')
     direction_render_serviceObject = @direction_render.getServiceObject()
-    @direction_service.getServiceObject().route direction_data, (response, status) ->
+
+    request = direction_data
+
+    request.travelMode = travelModeDefault
+
+    if provider_options?
+
+        if provider_options.travelMode?
+            if not _.isEmpty(provider_options.travelMode)
+                request.travelMode = @direction_service.primitives().directionTMs(provider_options.travelMode)
+
+        if provider_options.waypoints?
+            if provider_options.waypoints.length > 0
+                request.waypoints = provider_options.waypoints
+
+        if provider_options.polylineOptions?
+            if provider_options.polylineOptions.strokeColor?
+                if not _.isEmpty(provider_options.polylineOptions.strokeColor)
+                    direction_render_serviceObject.polylineOptions.strokeColor = provider_options.polylineOptions.strokeColor
+
+    @direction_service.getServiceObject().route (request), (response, status) ->
       if status is statusOk
         direction_render_serviceObject.setDirections response
+        route = response.routes[0]
+        if route?
+            summaryPanel = document.getElementById("directions_panel")
+            summaryPanel.innerHTML = ""
+
+            i = 0
+            while i < route.legs.length
+                routeSegment = i + 1
+                summaryPanel.innerHTML += "<b>Route Segment: " + routeSegment + "</b><br>"
+                summaryPanel.innerHTML += route.legs[i].start_address + " to "
+                summaryPanel.innerHTML += route.legs[i].end_address + "<br>"
+                summaryPanel.innerHTML += route.legs[i].distance.text + "<br>"
+                summaryPanel.innerHTML += route.legs[i].duration.text + "<br>"
+                i++
+
       else
         alert "Couldn´t find direction"
+        return
+
+
+  # clear directions of map
+  clearDirections: ()->
+    if @all_directions_renders?
+        if @all_directions_renders.length > 0
+            i = 0
+            while i < @all_directions_renders.length
+                direction_render = @all_directions_renders[i]
+                direction_render.getServiceObject().setMap( null)
+                i++
+
+    @all_directions_renders = []
 
   # removes markers from map
   removeMarkers: (gem_markers)->
